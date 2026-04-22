@@ -1,7 +1,6 @@
 <?php 
 include("../auth.php");
 include("../config/db.php");
-include("../security.php");
 
 // 🔥 PROCESSAR ANTES DO LAYOUT
 if($_SERVER['REQUEST_METHOD'] == 'POST'){

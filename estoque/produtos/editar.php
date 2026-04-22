@@ -1,7 +1,6 @@
 <?php 
 include("../auth.php");
 include("../config/db.php");
-include("../security.php");
 
 $id = intval($_GET['id'] ?? 0);
 
