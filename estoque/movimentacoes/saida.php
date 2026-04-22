@@ -26,7 +26,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     }
 
     // 🔥 TÉCNICO AUTOMÁTICO
-    $tecnico_id = intval($tecnico_usuario ?? 0);
+    $tecnico_id = !empty($tecnico_usuario) ? intval($tecnico_usuario) : null;
 
     // 🔍 VALIDAÇÃO
     if($produto_id <= 0){
@@ -76,10 +76,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
                 $mensagemTipo = 'success';
             }
         } catch (Throwable $e) {
-            if ($conn->errno) {
+            try {
                 $conn->rollback();
+            } catch (Throwable $ignored) {
+                // sem transação ativa
             }
-            $mensagem = "Erro interno ao salvar saída";
+            $erroBanco = trim($conn->error);
+            $mensagem = $erroBanco !== '' ? "Erro ao salvar saída: {$erroBanco}" : "Erro interno ao salvar saída";
             $mensagemTipo = 'danger';
         }
     }
