@@ -24,26 +24,39 @@ require_once __DIR__ . "/config/db.php";
 
 $id = intval($_SESSION['user_id']);
 
-$res = $conn->query("
-SELECT id, nome, tipo, permissoes, almoxarifado_id, tecnico_id 
-FROM usuarios 
-WHERE id = $id
+$stmt = $conn->prepare("
+SELECT id, nome, tipo, permissoes, almoxarifado_id, tecnico_id
+FROM usuarios
+WHERE id = ?
 ");
 
-if(!$res || $res->num_rows == 0){
+if (!$stmt) {
     session_destroy();
     header("Location: /estoque/login.php");
     exit;
 }
 
-$user = $res->fetch_assoc();
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$stmt->store_result();
+
+if($stmt->num_rows == 0){
+    $stmt->close();
+    session_destroy();
+    header("Location: /estoque/login.php");
+    exit;
+}
+
+$stmt->bind_result($userId, $nome, $tipo, $permissoes, $almoxarifadoId, $tecnicoId);
+$stmt->fetch();
+$stmt->close();
 
 // 🔥 ATUALIZA SESSÃO SEMPRE
-$_SESSION['user_nome'] = $user['nome'];
-$_SESSION['user_tipo'] = $user['tipo'];
-$_SESSION['permissoes'] = $user['permissoes'];
-$_SESSION['almoxarifado_id'] = $user['almoxarifado_id'];
-$_SESSION['tecnico_id'] = $user['tecnico_id']; // 🔥 AGORA VAI VIR
+$_SESSION['user_nome'] = $nome;
+$_SESSION['user_tipo'] = $tipo;
+$_SESSION['permissoes'] = $permissoes;
+$_SESSION['almoxarifado_id'] = $almoxarifadoId;
+$_SESSION['tecnico_id'] = $tecnicoId; // 🔥 AGORA VAI VIR
 
 // 🔐 PERMISSÕES
 if(!function_exists('temPermissao')){

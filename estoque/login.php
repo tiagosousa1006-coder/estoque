@@ -9,23 +9,30 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     if (!csrf_validate($_POST['csrf_token'] ?? null)) {
         $erro = "Token CSRF inválido";
     } else {
-
-        $usuario = $conn->real_escape_string($_POST['usuario']);
+        $usuario = trim($_POST['usuario'] ?? '');
         $senha   = $_POST['senha'];
+        $stmt = $conn->prepare("SELECT id, nome, usuario, senha, tipo FROM usuarios WHERE usuario = ? LIMIT 1");
 
-        $res = $conn->query("SELECT * FROM usuarios WHERE usuario = '$usuario' LIMIT 1");
+        if (!$stmt) {
+            $erro = "Erro interno ao preparar autenticação";
+        } else {
+            $stmt->bind_param("s", $usuario);
+            $stmt->execute();
+            $stmt->store_result();
+        }
 
-        if($res && $res->num_rows > 0){
+        if(isset($stmt) && $stmt && $stmt->num_rows > 0){
+            $stmt->bind_result($id, $nome, $usuarioDb, $senhaHash, $tipo);
+            $stmt->fetch();
 
-            $user = $res->fetch_assoc();
-
-            if(password_verify($senha, $user['senha'])){
+            if(password_verify($senha, $senhaHash)){
+                session_regenerate_id(true);
 
                 // 🔐 SALVA SESSÃO
-                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_id'] = $id;
 
                 // 🔥 REDIRECIONAMENTO POR PERFIL
-                if($user['tipo'] == 'admin'){
+                if($tipo == 'admin'){
                     header("Location: /estoque/index.php");
                 } else {
                     header("Location: /estoque/index.php");
@@ -38,7 +45,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
             }
 
         } else {
-            $erro = "Usuário não encontrado";
+            if ($erro === '') {
+                $erro = "Usuário não encontrado";
+            }
+        }
+
+        if (isset($stmt) && $stmt) {
+            $stmt->close();
         }
     }
 }
