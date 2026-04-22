@@ -37,7 +37,14 @@ if (!$stmt) {
 }
 
 $stmt->bind_param("i", $id);
-$stmt->execute();
+
+if (!$stmt->execute()) {
+    $stmt->close();
+    session_destroy();
+    header("Location: /estoque/login.php");
+    exit;
+}
+
 $stmt->store_result();
 
 if($stmt->num_rows == 0){

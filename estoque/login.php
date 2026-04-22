@@ -10,15 +10,24 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
         $erro = "Token CSRF inválido";
     } else {
         $usuario = trim($_POST['usuario'] ?? '');
-        $senha   = $_POST['senha'];
-        $stmt = $conn->prepare("SELECT id, nome, usuario, senha, tipo FROM usuarios WHERE usuario = ? LIMIT 1");
+        $senha   = $_POST['senha'] ?? '';
 
-        if (!$stmt) {
-            $erro = "Erro interno ao preparar autenticação";
+        if ($usuario === '' || $senha === '') {
+            $erro = "Usuário e senha são obrigatórios";
         } else {
-            $stmt->bind_param("s", $usuario);
-            $stmt->execute();
-            $stmt->store_result();
+            $stmt = $conn->prepare("SELECT id, nome, usuario, senha, tipo FROM usuarios WHERE usuario = ? LIMIT 1");
+
+            if (!$stmt) {
+                $erro = "Erro interno ao preparar autenticação";
+            } else {
+                $stmt->bind_param("s", $usuario);
+
+                if ($stmt->execute()) {
+                    $stmt->store_result();
+                } else {
+                    $erro = "Erro interno ao executar autenticação";
+                }
+            }
         }
 
         if(isset($stmt) && $stmt && $stmt->num_rows > 0){
@@ -41,12 +50,12 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
                 exit;
 
             } else {
-                $erro = "Senha incorreta";
+                $erro = "Usuário ou senha inválidos";
             }
 
         } else {
             if ($erro === '') {
-                $erro = "Usuário não encontrado";
+                $erro = "Usuário ou senha inválidos";
             }
         }
 
