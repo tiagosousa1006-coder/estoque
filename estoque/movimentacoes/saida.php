@@ -8,24 +8,28 @@ $tecnico_usuario = $_SESSION['tecnico_id'] ?? null;
 // 🔥 SALVAR
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
-    $produto_id   = intval($_POST['produto_id']);
-    $quantidade   = intval($_POST['quantidade']);
+    $produto_id   = intval($_POST['produto_id'] ?? 0);
+    $quantidade   = intval($_POST['quantidade'] ?? 0);
     $tipo_saida   = $_POST['tipo_saida'] ?? '';
     $destino      = $conn->real_escape_string(trim($_POST['destino'] ?? ''));
     $observacao   = $conn->real_escape_string(trim($_POST['observacao'] ?? ''));
 
     // 🔒 DEFINE ALMOX
     if($user_tipo != 'admin'){
-        $almoxarifado_id = $almox_usuario;
+        $almoxarifado_id = intval($almox_usuario ?? 0);
     } else {
-        $almoxarifado_id = intval($_POST['almoxarifado_id']);
+        $almoxarifado_id = intval($_POST['almoxarifado_id'] ?? 0);
     }
 
     // 🔥 TÉCNICO AUTOMÁTICO
     $tecnico_id = $tecnico_usuario;
 
     // 🔍 VALIDAÇÃO
-    if(!in_array($tipo_saida, ['uso_proprio','manutencao','instalacao','emprestimo'], true)){
+    if($produto_id <= 0){
+        echo "<div class='alert alert-danger'>Selecione um produto válido</div>";
+    } elseif($almoxarifado_id <= 0){
+        echo "<div class='alert alert-danger'>Almoxarifado inválido</div>";
+    } elseif(!in_array($tipo_saida, ['uso_proprio','manutencao','instalacao','emprestimo'], true)){
         echo "<div class='alert alert-danger'>Tipo de saída inválido</div>";
     } elseif($quantidade <= 0){
         echo "<div class='alert alert-danger'>Quantidade inválida</div>";
@@ -39,7 +43,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
             AND almoxarifado_id = $almoxarifado_id
         ");
 
-        $estoque = $res->fetch_assoc()['total'] ?? 0;
+        if(!$res){
+            echo "<div class='alert alert-danger'>Erro ao consultar estoque</div>";
+        } else {
+            $estoque = $res->fetch_assoc()['total'] ?? 0;
 
         if($estoque < $quantidade){
 
@@ -66,6 +73,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
             ");
 
             echo "<div class='alert alert-success'>✔ Saída registrada com sucesso</div>";
+        }
         }
     }
 }

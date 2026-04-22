@@ -8,16 +8,16 @@ if($_SESSION['user_tipo'] !== 'admin'){
 
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
-    $modo = $_POST['modo'];
+    $modo = $_POST['modo'] ?? '';
 
     // 🔵 ENTRADA SIMPLES (SEU CÓDIGO ORIGINAL)
     if($modo == 'simples'){
 
-        $produto = intval($_POST['produto']);
-        $almox = intval($_POST['almoxarifado']);
-        $quantidade = intval($_POST['quantidade']);
-        $tipo = $_POST['tipo'];
-        $obs = $conn->real_escape_string($_POST['observacao']);
+        $produto = intval($_POST['produto'] ?? 0);
+        $almox = intval($_POST['almoxarifado'] ?? 0);
+        $quantidade = intval($_POST['quantidade'] ?? 0);
+        $tipo = $_POST['tipo'] ?? '';
+        $obs = $conn->real_escape_string(($_POST['observacao'] ?? ''));
 
         if($quantidade <= 0){
             header("Location: entrada.php?erro=1");
@@ -48,9 +48,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     // 🟢 ENTRADA POR NOTA FISCAL
     if($modo == 'nota'){
 
-        $numero = $_POST['numero'];
-        $fornecedor = $_POST['fornecedor'];
-        $data = $_POST['data'];
+        $numero = $_POST['numero'] ?? '';
+        $fornecedor = $_POST['fornecedor'] ?? '';
+        $data = $_POST['data'] ?? '';
 
         // salva nota
         $conn->query("
@@ -60,11 +60,20 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
         $nota_id = $conn->insert_id;
 
-        foreach($_POST['produto_id'] as $i => $produto){
+        $produtos = $_POST['produto_id'] ?? [];
+        $quantidades = $_POST['quantidade'] ?? [];
+        $almoxarifados = $_POST['almoxarifado'] ?? [];
+
+        if(!is_array($produtos) || !is_array($quantidades) || !is_array($almoxarifados)) {
+            header("Location: entrada.php?erro=1");
+            exit;
+        }
+
+        foreach($produtos as $i => $produto){
 
             $produto = intval($produto);
-            $quantidade = intval($_POST['quantidade'][$i]);
-            $almox = intval($_POST['almoxarifado'][$i]);
+            $quantidade = intval($quantidades[$i] ?? 0);
+            $almox = intval($almoxarifados[$i] ?? 0);
 
             if($produto && $quantidade > 0){
 
