@@ -11,7 +11,7 @@ require_once __DIR__ . "/../security.php";
 
 <!-- 🔥 PWA -->
 <link rel="manifest" href="/estoque/manifest.json">
-<meta name="theme-color" content="#f97316">
+<meta name="theme-color" content="#1d4ed8">
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -19,16 +19,16 @@ require_once __DIR__ . "/../security.php";
 
 <style>
 :root{
-    --orange-700: #c2410c;
-    --orange-600: #ea580c;
-    --orange-500: #f97316;
-    --orange-400: #fb923c;
-    --orange-100: #ffedd5;
+    --blue-700: #1e40af;
+    --blue-600: #2563eb;
+    --blue-500: #3b82f6;
+    --blue-400: #60a5fa;
+    --blue-100: #dbeafe;
 }
 
 body {
     margin: 0;
-    background: #fff7ed;
+    background: #eff6ff;
     font-family: 'Segoe UI', sans-serif;
 }
 
@@ -37,7 +37,7 @@ body {
     width: 240px;
     height: 100vh;
     position: fixed;
-    background: var(--orange-700);
+    background: var(--blue-700);
     color: #fff;
     padding: 20px;
     overflow-y: auto;
@@ -50,7 +50,7 @@ body {
     width: 6px;
 }
 .sidebar::-webkit-scrollbar-thumb {
-    background: var(--orange-500);
+    background: var(--blue-500);
     border-radius: 10px;
 }
 
@@ -60,7 +60,7 @@ body {
 }
 
 .sidebar small {
-    color: #ffedd5;
+    color: #dbeafe;
     display: block;
     margin-top: 15px;
     margin-bottom: 5px;
@@ -68,7 +68,7 @@ body {
 
 .sidebar a {
     display: block;
-    color: #fff7ed;
+    color: #eff6ff;
     padding: 10px;
     border-radius: 8px;
     text-decoration: none;
@@ -76,7 +76,7 @@ body {
 }
 
 .sidebar a:hover {
-    background: var(--orange-600);
+    background: var(--blue-600);
     color: #fff;
 }
 
@@ -89,7 +89,7 @@ body {
 .topbar {
     height: 60px;
     background: #fff;
-    border-bottom: 2px solid var(--orange-100);
+    border-bottom: 2px solid var(--blue-100);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -109,14 +109,14 @@ body {
 
 .btn-primary,
 .btn-success{
-    background: var(--orange-500);
-    border-color: var(--orange-500);
+    background: var(--blue-500);
+    border-color: var(--blue-500);
 }
 
 .btn-primary:hover,
 .btn-success:hover{
-    background: var(--orange-600);
-    border-color: var(--orange-600);
+    background: var(--blue-600);
+    border-color: var(--blue-600);
 }
 
 /* MOBILE */

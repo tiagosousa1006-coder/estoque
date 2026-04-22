@@ -69,7 +69,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
 <style>
 body{
-    background: linear-gradient(135deg, #f97316, #c2410c);
+    background: linear-gradient(135deg, #3b82f6, #1e40af);
     height:100vh;
     display:flex;
     align-items:center;
@@ -85,13 +85,13 @@ body{
 }
 
 .btn-primary{
-    background: #f97316;
-    border-color: #f97316;
+    background: #3b82f6;
+    border-color: #3b82f6;
 }
 
 .btn-primary:hover{
-    background: #ea580c;
-    border-color: #ea580c;
+    background: #2563eb;
+    border-color: #2563eb;
 }
 </style>
 
