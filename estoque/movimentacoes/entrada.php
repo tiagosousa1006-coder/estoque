@@ -136,6 +136,7 @@ if(isset($_GET['erro'])){
 ?>
 
 <form method="POST" class="row g-3">
+<input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
 
 <!-- 🔥 MODO -->
 <div class="col-12">

@@ -1,8 +1,6 @@
 <?php 
 include("../auth.php");
 include("../config/db.php");
-include("../assets/layout.php");
-
 $user_tipo = $_SESSION['user_tipo'] ?? 'usuario';
 $almox_usuario = $_SESSION['almoxarifado_id'] ?? null;
 $tecnico_usuario = $_SESSION['tecnico_id'] ?? null;
@@ -12,9 +10,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
     $produto_id   = intval($_POST['produto_id']);
     $quantidade   = intval($_POST['quantidade']);
-    $tipo_saida   = $_POST['tipo_saida'];
-    $destino      = $_POST['destino'] ?? '';
-    $observacao   = $_POST['observacao'] ?? '';
+    $tipo_saida   = $_POST['tipo_saida'] ?? '';
+    $destino      = $conn->real_escape_string(trim($_POST['destino'] ?? ''));
+    $observacao   = $conn->real_escape_string(trim($_POST['observacao'] ?? ''));
 
     // 🔒 DEFINE ALMOX
     if($user_tipo != 'admin'){
@@ -27,7 +25,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     $tecnico_id = $tecnico_usuario;
 
     // 🔍 VALIDAÇÃO
-    if($quantidade <= 0){
+    if(!in_array($tipo_saida, ['uso_proprio','manutencao','instalacao','emprestimo'], true)){
+        echo "<div class='alert alert-danger'>Tipo de saída inválido</div>";
+    } elseif($quantidade <= 0){
         echo "<div class='alert alert-danger'>Quantidade inválida</div>";
     } else {
 
@@ -70,6 +70,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     }
 }
 ?>
+<?php include("../assets/layout.php"); ?>
 
 <div class="container-fluid">
 <div class="card p-4">
@@ -77,6 +78,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 <h4 class="mb-3">📤 Saída de Produto</h4>
 
 <form method="POST">
+<input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
 
 <!-- PRODUTO -->
 <div class="mb-3">
