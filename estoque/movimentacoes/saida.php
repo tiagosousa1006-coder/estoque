@@ -15,8 +15,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     $produto_id   = intval($_POST['produto_id'] ?? 0);
     $quantidade   = intval($_POST['quantidade'] ?? 0);
     $tipo_saida   = $_POST['tipo_saida'] ?? '';
-    $destino      = trim($_POST['destino'] ?? '');
-    $observacao   = trim($_POST['observacao'] ?? '');
+    $destino      = $conn->real_escape_string(trim($_POST['destino'] ?? ''));
+    $observacao   = $conn->real_escape_string(trim($_POST['observacao'] ?? ''));
 
     // 🔒 DEFINE ALMOX
     if($user_tipo != 'admin'){
@@ -26,7 +26,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     }
 
     // 🔥 TÉCNICO AUTOMÁTICO
-    $tecnico_id = !empty($tecnico_usuario) ? intval($tecnico_usuario) : null;
+    $tecnico_id = !empty($tecnico_usuario) ? intval($tecnico_usuario) : 'NULL';
 
     // 🔍 VALIDAÇÃO
     if($produto_id <= 0){
@@ -42,58 +42,46 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
         $mensagem = "Quantidade inválida";
         $mensagemTipo = 'danger';
     } else {
-        try {
-            // 🔍 VERIFICA ESTOQUE ATUAL
-            $stmtSaldo = $conn->prepare("SELECT IFNULL(SUM(quantidade),0) as total FROM estoque_local WHERE produto_id = ? AND almoxarifado_id = ?");
-            $stmtSaldo->bind_param("ii", $produto_id, $almoxarifado_id);
-            $stmtSaldo->execute();
-            $stmtSaldo->bind_result($estoqueTotal);
-            $stmtSaldo->fetch();
-            $estoque = intval($estoqueTotal ?? 0);
-            $stmtSaldo->close();
+
+        // 🔍 VERIFICA ESTOQUE ATUAL
+        $res = $conn->query("\n            SELECT IFNULL(SUM(quantidade),0) as total \n            FROM estoque_local \n            WHERE produto_id = $produto_id \n            AND almoxarifado_id = $almoxarifado_id\n        ");
+
+        if(!$res){
+            $mensagem = "Erro ao consultar estoque: " . $conn->error;
+            $mensagemTipo = 'danger';
+        } else {
+            $estoque = intval($res->fetch_assoc()['total'] ?? 0);
 
             if($estoque < $quantidade){
-                $mensagem = "Estoque insuficiente (Disponível: {$estoque})";
+                $mensagem = "Estoque insuficiente (Disponível: $estoque)";
                 $mensagemTipo = 'danger';
             } else {
-                $conn->begin_transaction();
 
                 // 🔥 REGISTRA MOVIMENTAÇÃO
-                if ($tecnico_id === null) {
-                    $stmtMov = $conn->prepare("INSERT INTO movimentacoes (produto_id, quantidade, tipo, almoxarifado_id, tecnico_id, destino, observacao, data_movimentacao) VALUES (?, ?, 'saida', ?, NULL, ?, ?, NOW())");
-                    $stmtMov->bind_param("iiiss", $produto_id, $quantidade, $almoxarifado_id, $destino, $observacao);
+                $sqlMov = "\n                    INSERT INTO movimentacoes \n                    (produto_id, quantidade, tipo, almoxarifado_id, tecnico_id, destino, observacao, data_movimentacao)\n                    VALUES \n                    ($produto_id, $quantidade, 'saida', $almoxarifado_id, $tecnico_id, '$destino', '$observacao', NOW())\n                ";
+
+                if(!$conn->query($sqlMov)){
+                    $mensagem = "Erro ao salvar saída: " . $conn->error;
+                    $mensagemTipo = 'danger';
                 } else {
-                    $stmtMov = $conn->prepare("INSERT INTO movimentacoes (produto_id, quantidade, tipo, almoxarifado_id, tecnico_id, destino, observacao, data_movimentacao) VALUES (?, ?, 'saida', ?, ?, ?, ?, NOW())");
-                    $stmtMov->bind_param("iiiiss", $produto_id, $quantidade, $almoxarifado_id, $tecnico_id, $destino, $observacao);
+                    // 🔥 ATUALIZA ESTOQUE (evita erro de chave duplicada)
+                    $sqlEstoque = "\n                        INSERT INTO estoque_local \n                        (produto_id, almoxarifado_id, quantidade)\n                        VALUES \n                        ($produto_id, $almoxarifado_id, -$quantidade)\n                        ON DUPLICATE KEY UPDATE quantidade = quantidade - $quantidade\n                    ";
+
+                    if(!$conn->query($sqlEstoque)){
+                        $mensagem = "Erro ao atualizar estoque: " . $conn->error;
+                        $mensagemTipo = 'danger';
+                    } else {
+                        $mensagem = "Saída registrada com sucesso";
+                        $mensagemTipo = 'success';
+                    }
                 }
-                $stmtMov->execute();
-                $stmtMov->close();
-
-                // 🔥 ATUALIZA ESTOQUE (evita erro de chave duplicada)
-                $stmtEstoque = $conn->prepare("INSERT INTO estoque_local (produto_id, almoxarifado_id, quantidade) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantidade = quantidade - VALUES(quantidade)");
-                $stmtEstoqueQtd = $quantidade;
-                $stmtEstoque->bind_param("iii", $produto_id, $almoxarifado_id, $stmtEstoqueQtd);
-                $stmtEstoque->execute();
-                $stmtEstoque->close();
-
-                $conn->commit();
-                $mensagem = "Saída registrada com sucesso";
-                $mensagemTipo = 'success';
             }
-        } catch (Throwable $e) {
-            try {
-                $conn->rollback();
-            } catch (Throwable $ignored) {
-                // sem transação ativa
-            }
-            $erroBanco = trim($conn->error);
-            $mensagem = $erroBanco !== '' ? "Erro ao salvar saída: {$erroBanco}" : "Erro interno ao salvar saída";
-            $mensagemTipo = 'danger';
         }
     }
 }
+
+include("../assets/layout.php");
 ?>
-<?php include("../assets/layout.php"); ?>
 
 <div class="container-fluid">
 <div class="card p-4">
@@ -101,9 +89,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 <h4 class="mb-3">📤 Saída de Produto</h4>
 
 <?php if($mensagem): ?>
-<div class="alert alert-<?= e($mensagemTipo) ?>">
-    <?= e($mensagem) ?>
-</div>
+<div class="alert alert-<?= e($mensagemTipo) ?>"><?= e($mensagem) ?></div>
 <?php endif; ?>
 
 <form method="POST">
