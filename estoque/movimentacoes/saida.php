@@ -59,8 +59,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
                 $conn->begin_transaction();
 
                 // 🔥 REGISTRA MOVIMENTAÇÃO
-                $stmtMov = $conn->prepare("INSERT INTO movimentacoes (produto_id, quantidade, tipo, almoxarifado_id, tecnico_id, destino, observacao, data_movimentacao) VALUES (?, ?, 'saida', ?, ?, ?, ?, NOW())");
-                $stmtMov->bind_param("iiiiss", $produto_id, $quantidade, $almoxarifado_id, $tecnico_id, $destino, $observacao);
+                if ($tecnico_id === null) {
+                    $stmtMov = $conn->prepare("INSERT INTO movimentacoes (produto_id, quantidade, tipo, almoxarifado_id, tecnico_id, destino, observacao, data_movimentacao) VALUES (?, ?, 'saida', ?, NULL, ?, ?, NOW())");
+                    $stmtMov->bind_param("iiiss", $produto_id, $quantidade, $almoxarifado_id, $destino, $observacao);
+                } else {
+                    $stmtMov = $conn->prepare("INSERT INTO movimentacoes (produto_id, quantidade, tipo, almoxarifado_id, tecnico_id, destino, observacao, data_movimentacao) VALUES (?, ?, 'saida', ?, ?, ?, ?, NOW())");
+                    $stmtMov->bind_param("iiiiss", $produto_id, $quantidade, $almoxarifado_id, $tecnico_id, $destino, $observacao);
+                }
                 $stmtMov->execute();
                 $stmtMov->close();
 
