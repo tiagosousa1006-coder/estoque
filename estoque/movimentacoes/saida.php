@@ -2,6 +2,8 @@
 include("../auth.php");
 include("../config/db.php");
 
+mysqli_report(MYSQLI_REPORT_OFF);
+
 $user_tipo = $_SESSION['user_tipo'] ?? 'usuario';
 $almox_usuario = $_SESSION['almoxarifado_id'] ?? null;
 $tecnico_usuario = $_SESSION['tecnico_id'] ?? null;
